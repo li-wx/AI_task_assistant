@@ -1,0 +1,12 @@
+[project]
+name = "ai-task-assistant"
+version = "0.1.0"
+description = "AI-powered task management assistant"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "openai>=1.50.0",
+    "python-dotenv>=1.0.0",
+]

@@ -63,4 +63,4 @@ jobs:
         with:
           app-name: 'AI-task-assistant'
           slot-name: 'Production'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_1D751B0C823D422CABB4993D2422A7C8 }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_C50C06F46CFB4140A984A0848E86A1EB }}

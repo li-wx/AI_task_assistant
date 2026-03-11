@@ -29,9 +29,9 @@
   .msg.user { background: var(--primary); color: #fff; align-self: flex-end; border-bottom-right-radius: .25rem; }
   .msg.assistant { background: var(--card); border: 1px solid var(--border); align-self: flex-start; border-bottom-left-radius: .25rem; }
   .msg.assistant code { background: #f1f5f9; padding: .1em .3em; border-radius: 3px; font-size: .85em; }
-  .chat-input { display: flex; gap: .5rem; padding: .75rem 1rem; border-top: 1px solid var(--border); background: var(--card); }
-  .chat-input input { flex: 1; padding: .6rem .75rem; border: 1px solid var(--border); border-radius: .5rem; font-size: .9rem; outline: none; }
-  .chat-input input:focus { border-color: var(--primary); }
+  .chat-input { display: flex; gap: .5rem; padding: .75rem 1rem; border-top: 1px solid var(--border); background: var(--card); align-items: flex-end; }
+  .chat-input textarea { flex: 1; min-height: 40px; max-height: 140px; padding: .6rem .75rem; border: 1px solid var(--border); border-radius: .5rem; font-size: .9rem; outline: none; resize: none; overflow-y: auto; line-height: 1.4; }
+  .chat-input textarea:focus { border-color: var(--primary); }
   .chat-input button { padding: .6rem 1.25rem; background: var(--primary); color: #fff; border: none; border-radius: .5rem; cursor: pointer; font-size: .9rem; font-weight: 500; }
   .chat-input button:hover { background: var(--primary-hover); }
   .chat-input button:disabled { opacity: .5; cursor: not-allowed; }
@@ -82,7 +82,7 @@
       <div class="msg assistant">Hello! I'm your AI task assistant. I can help you create, organize, and prioritize tasks. Try saying something like:<br><br>• "Create a task to prepare the quarterly report by Friday"<br>• "Break down the website redesign project into subtasks"<br>• "What should I work on next?"</div>
     </div>
     <div class="chat-input">
-      <input type="text" id="chatInput" placeholder="Type a message…" autocomplete="off">
+      <textarea id="chatInput" placeholder="Type a message…" autocomplete="off" rows="1"></textarea>
       <button id="sendBtn" onclick="sendMessage()">Send</button>
     </div>
   </div>
@@ -124,12 +124,24 @@ document.querySelectorAll('.task-filters button').forEach(btn => {
 });
 
 // --- Chat ---
-chatInput.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) sendMessage(); });
+chatInput.addEventListener('input', autoResizeChatInput);
+chatInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+
+function autoResizeChatInput() {
+  chatInput.style.height = 'auto';
+  chatInput.style.height = `${Math.min(chatInput.scrollHeight, 140)}px`;
+}
 
 async function sendMessage() {
   const text = chatInput.value.trim();
   if (!text) return;
   chatInput.value = '';
+  autoResizeChatInput();
   appendMsg('user', text);
   sendBtn.disabled = true;
 
@@ -219,6 +231,7 @@ function esc(s) {
 }
 
 // Initial load
+autoResizeChatInput();
 loadTasks();
 </script>
 </body>

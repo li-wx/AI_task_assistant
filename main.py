@@ -73,7 +73,8 @@ def get_openai_client() -> AzureOpenAI:
     )
 
 
-SYSTEM_PROMPT = f"""\
+def build_system_prompt() -> str:
+        return f"""\
 You are an intelligent task management assistant. The current date/time is {datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")}.
 
 Your capabilities:
@@ -87,7 +88,7 @@ When the user asks you to create or modify tasks, respond with a JSON block insi
 ```json ... ``` fences that contains an "actions" array. Each action object has:
 - "action": one of "create", "update", "delete"
 - "task": an object with relevant fields (title, description, priority, status, deadline, parent_id, depends_on, tags).
-  For update/delete include the "id" field.
+    For update/delete include the "id" field.
 
 Priority values: "high", "medium", "low"
 Status values: "todo", "in-progress", "done"
@@ -284,7 +285,7 @@ async def chat(body: ChatRequest):
     tasks = load_tasks()
 
     # Build message context
-    messages: list[dict] = [{"role": "system", "content": SYSTEM_PROMPT}]
+    messages: list[dict] = [{"role": "system", "content": build_system_prompt()}]
 
     # Include current tasks summary
     if tasks:

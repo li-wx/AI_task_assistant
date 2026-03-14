@@ -140,6 +140,8 @@ function autoResizeChatInput() {
 async function sendMessage() {
   const text = chatInput.value.trim();
   if (!text) return;
+  const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || null;
+  const utcOffsetMinutes = -new Date().getTimezoneOffset();
   chatInput.value = '';
   autoResizeChatInput();
   appendMsg('user', text);
@@ -149,7 +151,11 @@ async function sendMessage() {
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({message: text}),
+      body: JSON.stringify({
+        message: text,
+        timezone: userTimeZone,
+        utc_offset_minutes: utcOffsetMinutes,
+      }),
     });
     if (!res.ok) throw new Error(`Error ${res.status}`);
     const data = await res.json();

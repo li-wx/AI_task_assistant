@@ -1,8 +1,9 @@
 import json
 import os
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
@@ -73,9 +74,44 @@ def get_openai_client() -> AzureOpenAI:
     )
 
 
-def build_system_prompt() -> str:
-        return f"""\
+def _build_user_time_context(user_timezone: str | None, utc_offset_minutes: int | None) -> str:
+    now_utc = datetime.now(timezone.utc)
+
+    if user_timezone:
+        try:
+            local_now = now_utc.astimezone(ZoneInfo(user_timezone))
+            return (
+                f"The user's local time zone is {user_timezone}. "
+                f"Current user local date/time is {local_now.strftime('%Y-%m-%d %H:%M (%Z, UTC%z)')}. "
+                "Interpret user time phrases like 'today', 'tomorrow', and '2pm' in this local time zone unless they explicitly say otherwise."
+            )
+        except Exception:
+            pass
+
+    if utc_offset_minutes is not None:
+        try:
+            offset_minutes = int(utc_offset_minutes)
+            local_tz = timezone(timedelta(minutes=offset_minutes))
+            local_now = now_utc.astimezone(local_tz)
+            return (
+                f"The user's local UTC offset is {offset_minutes} minutes. "
+                f"Current user local date/time is {local_now.strftime('%Y-%m-%d %H:%M (UTC%z)')}. "
+                "Interpret user time phrases like 'today', 'tomorrow', and '2pm' in this local time context unless they explicitly say otherwise."
+            )
+        except (TypeError, ValueError):
+            pass
+
+    return (
+        "User local time zone is unknown. "
+        "If a request depends on local time interpretation (like 'today', 'tomorrow', or '2pm'), ask a brief clarifying question."
+    )
+
+
+def build_system_prompt(user_timezone: str | None, utc_offset_minutes: int | None) -> str:
+    user_time_context = _build_user_time_context(user_timezone, utc_offset_minutes)
+    return f"""\
 You are an intelligent task management assistant. The current date/time is {datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")}.
+{user_time_context}
 
 Your capabilities:
 1. Help users create, update, delete, and organize tasks.
@@ -104,6 +140,8 @@ If the user is just chatting or asking questions, respond normally without JSON.
 
 class ChatRequest(BaseModel):
     message: str
+    timezone: str | None = None
+    utc_offset_minutes: int | None = None
 
 
 class TaskCreate(BaseModel):
@@ -285,7 +323,10 @@ async def chat(body: ChatRequest):
     tasks = load_tasks()
 
     # Build message context
-    messages: list[dict] = [{"role": "system", "content": build_system_prompt()}]
+    messages: list[dict] = [{
+        "role": "system",
+        "content": build_system_prompt(body.timezone, body.utc_offset_minutes),
+    }]
 
     # Include current tasks summary
     if tasks:

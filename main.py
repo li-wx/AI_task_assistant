@@ -328,14 +328,9 @@ async def chat(body: ChatRequest):
         "content": build_system_prompt(body.timezone, body.utc_offset_minutes),
     }]
 
-    # Include current tasks summary
+    # Include full current tasks context
     if tasks:
-        task_summary = json.dumps(
-            [{"id": t["id"], "title": t["title"], "status": t["status"],
-              "priority": t["priority"], "deadline": t.get("deadline")}
-             for t in tasks],
-            indent=2,
-        )
+        task_summary = json.dumps(tasks, indent=2)
         messages.append({
             "role": "system",
             "content": f"Current tasks:\n{task_summary}",
